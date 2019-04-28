@@ -10,13 +10,16 @@
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
 char substrings[WIKI_ARRAY_SIZE-1][MAX_ENTRY_LENGTH];
 
+void readFile();
+void calcSubstring(int);
+void printResults();
+
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-main() {
-
+int main() {
 	omp_set_num_threads(NUM_THREADS);
 	
-	readfile();
+	readFile();
 
 	#pragma omp parallel 
 	{
@@ -24,15 +27,16 @@ main() {
 	}
 	
 	printResults();
+	return 0;
 }
 
-void readfile()
+void readFile()
 {
 	FILE * fp = fopen("test.txt","r");
-	if(file == NULL)
+	if(fp == NULL)
 	{
 		printf("fail");
-		return -1;
+		return;
 	}
 	
 	char buff[MAX_ENTRY_LENGTH];
@@ -55,7 +59,8 @@ void calcSubstring(int threadID)
 	int m; //length of string 1
 	int n; //length of string 2
 	
-	//add check for last entry
+	//The last entry does not have an entry that follows it
+	if (threadID == WIKI_ARRAY_SIZE - 1) return;
 	
 	#pragma omp private(L, string1, string2, m, n, substring)
 	{
@@ -108,7 +113,7 @@ void calcSubstring(int threadID)
 	}
 }
 
-void printResults
+void printResults()
 {
 	for (int i = 0; i < WIKI_ARRAY_SIZE-1; i++)
 	{
