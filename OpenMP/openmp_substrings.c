@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define NUM_THREADS 4
-#define WIKI_ARRAY_SIZE 6
+#define WIKI_ARRAY_SIZE 4
 #define MAX_ENTRY_LENGTH 100
 
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
@@ -106,6 +106,8 @@ void calcSubstring(int threadID)
 			else if (L[i+1,j] >= L[i,j+1]) i++;
 			else j++;
 		}
+		//add the null terminating character to the end of the substring
+		substring[s_index] = '\0';
 		
 		#pragma omp critical
 		{
