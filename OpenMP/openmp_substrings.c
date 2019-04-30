@@ -69,11 +69,12 @@ void calcSubstring(int threadID)
 		m = strlen(string1);
 		n = strlen(string2);
 		int L[m+1][n+1];
+		int i,j;
 		
 		//calculate the dynamic programming table
-		for (int i = 0; i <=m; i++)
+		for (i = 0; i <=m; i++)
 		{
-			for (int j = 0; j <= n; j++)
+			for (j = 0; j <= n; j++)
 			{
 				if (i == 0 || j == 0)
 				{
@@ -92,8 +93,8 @@ void calcSubstring(int threadID)
 		
 		//make another pass through the table to find the longest common substring
 		int s_index = 0;
-		int i = 0;
-		int j = 0;
+		i = 0;
+		j = 0;
 		
 		while (i < m && j < n)
 		{
@@ -115,7 +116,8 @@ void calcSubstring(int threadID)
 
 void printResults()
 {
-	for (int i = 0; i < WIKI_ARRAY_SIZE-1; i++)
+	int i;
+	for (i = 0; i < WIKI_ARRAY_SIZE-1; i++)
 	{
 		printf("Line: %d, LCS: %s\n",i,substrings[i]);
 	}

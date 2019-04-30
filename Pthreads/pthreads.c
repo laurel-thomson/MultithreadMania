@@ -28,12 +28,13 @@ int main() {
 	readFile();
 	
 	int result_code;
-
-	for (int i = 0; i < NUM_THREADS; i++)
+	void * status;
+	int i;
+	for (i = 0; i < NUM_THREADS; i++)
 	{
 		result_code = pthread_create(&threads[i], &attr, calcSubstring, (void *)i);
 		if (result_code) {
-			printf("ERROR; return code from pthread_create() is %d\n", rc);
+			printf("ERROR; return code from pthread_create() is %d\n", result_code);
 			exit(-1);
 		}
 	}
@@ -41,10 +42,10 @@ int main() {
 	//free attribute and wait for the other threads
 	pthread_attr_destroy(&attr);
 	for(i=0; i<NUM_THREADS; i++) {
-		rc = pthread_join(threads[i], &status);
-		if (rc) 
+		result_code = pthread_join(threads[i], &status);
+		if (result_code) 
 		{
-			printf("ERROR; return code from pthread_join() is %d\n", rc);
+			printf("ERROR; return code from pthread_join() is %d\n", result_code);
 			exit(-1);
 		}
 	}
@@ -88,18 +89,19 @@ void calcSubstring(int threadID)
 	//The last entry does not have an entry that follows it
 	if (threadID == WIKI_ARRAY_SIZE - 1) return;
 	
-	#pragma omp private(L, string1, string2, m, n, substring)
-	{
+	//#pragma omp private(L, string1, string2, m, n, substring)
+	//{
 		string1 = wiki_array[threadID];
 		string2 = wiki_array[threadID+1];
 		m = strlen(string1);
 		n = strlen(string2);
 		int L[m+1][n+1];
-		
+		int i,j;
+
 		//calculate the dynamic programming table
-		for (int i = 0; i <=m; i++)
+		for (i = 0; i <=m; i++)
 		{
-			for (int j = 0; j <= n; j++)
+			for (j = 0; j <= n; j++)
 			{
 				if (i == 0 || j == 0)
 				{
@@ -118,8 +120,8 @@ void calcSubstring(int threadID)
 		
 		//make another pass through the table to find the longest common substring
 		int s_index = 0;
-		int i = 0;
-		int j = 0;
+		i = 0;
+		j = 0;
 		
 		while (i < m && j < n)
 		{
@@ -136,12 +138,13 @@ void calcSubstring(int threadID)
 		pthread_mutex_lock (&lock);
 		strcpy(substrings[threadID],substring);
 		pthread_mutex_unlock (&lock);
-	}
+	//}
 }
 
 void printResults()
 {
-	for (int i = 0; i < WIKI_ARRAY_SIZE-1; i++)
+	int i;
+	for (i = 0; i < WIKI_ARRAY_SIZE-1; i++)
 	{
 		printf("Line: %d, LCS: %s\n",i,substrings[i]);
 	}
