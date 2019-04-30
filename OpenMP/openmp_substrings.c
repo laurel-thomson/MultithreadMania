@@ -4,7 +4,9 @@
 #include <string.h>
 
 #define NUM_THREADS 4
-#define WIKI_ARRAY_SIZE 4
+#define WIKI_ARRAY_SIZE 8
+
+
 #define MAX_ENTRY_LENGTH 100
 
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
@@ -60,10 +62,9 @@ void calcSubstring(int threadID)
 	int n; //length of string 2
 	int index;
 	
-	//The last entry does not have an entry that follows it
-	for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
+	#pragma omp private(L, string1, string2, m, n, substring)
 	{
-		#pragma omp private(L, string1, string2, m, n, substring)
+		for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
 		{
 			string1 = wiki_array[threadID];
 			string2 = wiki_array[threadID+1];
