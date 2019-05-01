@@ -4,8 +4,8 @@
 #include <string.h>
 
 #define NUM_THREADS 4
-#define WIKI_ARRAY_SIZE 8
-#define MAX_ENTRY_LENGTH 100
+#define WIKI_ARRAY_SIZE 50
+#define MAX_ENTRY_LENGTH 1000
 
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
 char substrings[WIKI_ARRAY_SIZE-1][MAX_ENTRY_LENGTH];
@@ -33,7 +33,6 @@ int main() {
 				pthread_attr_init(&attr);
 				pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-				readFile();
 
 				int result_code;
 				void * status;
