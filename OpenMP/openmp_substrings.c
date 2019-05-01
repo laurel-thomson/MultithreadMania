@@ -66,8 +66,9 @@ void calcSubstring(int threadID)
 	{
 		for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
 		{
-			string1 = wiki_array[threadID];
-			string2 = wiki_array[threadID+1];
+			printf("Index = %d\n",index);
+			string1 = wiki_array[index];
+			string2 = wiki_array[index+1];
 			m = strlen(string1);
 			n = strlen(string2);
 			int L[m+1][n+1];
@@ -113,7 +114,7 @@ void calcSubstring(int threadID)
 			
 			#pragma omp critical
 			{
-				strcpy(substrings[threadID],substring);
+				strcpy(substrings[index],substring);
 			}
 		}
 	}
