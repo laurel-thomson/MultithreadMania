@@ -79,6 +79,8 @@ void readFile()
 
 void calcSubstring(int threadID)
 {
+	int index;
+
 	for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
 	{
 		//dynamic programming table for comparing two wiki entries
