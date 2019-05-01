@@ -4,13 +4,15 @@
 #include <string.h>
 
 #define NUM_THREADS 4
-#define WIKI_ARRAY_SIZE 8
-#define MAX_ENTRY_LENGTH 100
+#define WIKI_ARRAY_SIZE 50
+#define MAX_ENTRY_LENGTH 1000
 
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
 char substrings[WIKI_ARRAY_SIZE-1][MAX_ENTRY_LENGTH];
+int lines_read;
+int batch_number = 0;
 
-void readFile();
+int readFile(FILE *);
 void calcSubstring(int);
 void printResults();
 
@@ -18,21 +20,26 @@ void printResults();
 
 int main() {
 	omp_set_num_threads(NUM_THREADS);
-	
-	readFile();
-
-	#pragma omp parallel 
+	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");	
+	while (1)
 	{
-		calcSubstring(omp_get_thread_num());
+		lines_read = readFile(fp);
+		if (lines_read == 0) break;
+
+		#pragma omp parallel 
+		{
+			calcSubstring(omp_get_thread_num());
+		}
+		printResults();
+		batch_number++;
+		if (lines_read < WIKI_ARRAY_SIZE) break;
 	}
-	
-	printResults();
+	fclose(fp);
 	return 0;
 }
 
-void readFile()
+int readFile(FILE * fp)
 {
-	FILE * fp = fopen("test.txt","r");
 	if(fp == NULL)
 	{
 		printf("fail");
@@ -41,13 +48,17 @@ void readFile()
 	
 	char buff[MAX_ENTRY_LENGTH];
 	int line_number = 0;
-	
-	while(fgets(buff,MAX_ENTRY_LENGTH,fp) != NULL)
+	int i;
+	for (i = 0; i < WIKI_ARRAY_SIZE; i++)
 	{
+		if (fgets(buff,MAX_ENTRY_LENGTH,fp) == NULL)
+		{
+			return i;
+		}
 		strcpy(wiki_array[line_number],buff);
 		line_number++;
 	}
-	fclose(fp);
+	return i;
 }
 
 void calcSubstring(int threadID)
@@ -121,6 +132,6 @@ void printResults()
 	int i;
 	for (i = 0; i < WIKI_ARRAY_SIZE-1; i++)
 	{
-		printf("Line: %d, LCS: %s\n",i,substrings[i]);
+		printf("Line: %d, LCS: %s\n",batch_number*WIKI_ARRAY_SIZE + i,substrings[i]);
 	}
 }
