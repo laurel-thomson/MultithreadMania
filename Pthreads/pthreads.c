@@ -88,11 +88,8 @@ void calcSubstring(int threadID)
 		int m; //length of string 1
 		int n; //length of string 2
 		
-		//The last entry does not have an entry that follows it
-		if (threadID == WIKI_ARRAY_SIZE - 1) return;
-		
-		string1 = wiki_array[threadID];
-		string2 = wiki_array[threadID+1];
+		string1 = wiki_array[index];
+		string2 = wiki_array[index+1];
 		m = strlen(string1);
 		n = strlen(string2);
 		int L[m+1][n+1];
@@ -136,7 +133,7 @@ void calcSubstring(int threadID)
 		
 		//critical section
 		pthread_mutex_lock (&lock);
-		strcpy(substrings[threadID],substring);
+		strcpy(substrings[index],substring);
 		pthread_mutex_unlock (&lock);
 	}
 }
