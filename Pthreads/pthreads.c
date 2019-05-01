@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define NUM_THREADS 4
-#define WIKI_ARRAY_SIZE 6
+#define WIKI_ARRAY_SIZE 8
 #define MAX_ENTRY_LENGTH 100
 
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
@@ -79,63 +79,66 @@ void readFile()
 
 void calcSubstring(int threadID)
 {
-	//dynamic programming table for comparing two wiki entries
-	char * string1;
-	char * string2;
-	char substring[MAX_ENTRY_LENGTH]; //the longest common substring
-	int m; //length of string 1
-	int n; //length of string 2
-	
-	//The last entry does not have an entry that follows it
-	if (threadID == WIKI_ARRAY_SIZE - 1) return;
-	
-	string1 = wiki_array[threadID];
-	string2 = wiki_array[threadID+1];
-	m = strlen(string1);
-	n = strlen(string2);
-	int L[m+1][n+1];
-	int i,j;
+	for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
+	{
+		//dynamic programming table for comparing two wiki entries
+		char * string1;
+		char * string2;
+		char substring[MAX_ENTRY_LENGTH]; //the longest common substring
+		int m; //length of string 1
+		int n; //length of string 2
+		
+		//The last entry does not have an entry that follows it
+		if (threadID == WIKI_ARRAY_SIZE - 1) return;
+		
+		string1 = wiki_array[threadID];
+		string2 = wiki_array[threadID+1];
+		m = strlen(string1);
+		n = strlen(string2);
+		int L[m+1][n+1];
+		int i,j;
 
-	//calculate the dynamic programming table
-	for (i = 0; i <=m; i++)
-	{
-		for (j = 0; j <= n; j++)
+		//calculate the dynamic programming table
+		for (i = 0; i <=m; i++)
 		{
-			if (i == 0 || j == 0)
+			for (j = 0; j <= n; j++)
 			{
-				L[i][j] = 0;
-			}
-			else if (string1[i-1] == string2[j-1])
-			{
-				L[i][j] = L[i-1][j-1] + 1;
-			}
-			else
-			{
-				L[i][j] = MAX(L[i-1][j],L[i][j-1]);
+				if (i == 0 || j == 0)
+				{
+					L[i][j] = 0;
+				}
+				else if (string1[i-1] == string2[j-1])
+				{
+					L[i][j] = L[i-1][j-1] + 1;
+				}
+				else
+				{
+					L[i][j] = MAX(L[i-1][j],L[i][j-1]);
+				}
 			}
 		}
-	}
-	
-	//make another pass through the table to find the longest common substring
-	int s_index = 0;
-	i = 0;
-	j = 0;
-	
-	while (i < m && j < n)
-	{
-		if (string1[i] == string2[j])
+		
+		//make another pass through the table to find the longest common substring
+		int s_index = 0;
+		i = 0;
+		j = 0;
+		
+		while (i < m && j < n)
 		{
-			substring[s_index] = string1[i];
-			i++; j++; s_index++;
+			if (string1[i] == string2[j])
+			{
+				substring[s_index] = string1[i];
+				i++; j++; s_index++;
+			}
+			else if (L[i+1][j] >= L[i][j+1]) i++;
+			else j++;
 		}
-		else if (L[i+1,j] >= L[i,j+1]) i++;
-		else j++;
+		
+		//critical section
+		pthread_mutex_lock (&lock);
+		strcpy(substrings[threadID],substring);
+		pthread_mutex_unlock (&lock);
 	}
-	
-	//critical section
-	pthread_mutex_lock (&lock);
-	strcpy(substrings[threadID],substring);
-	pthread_mutex_unlock (&lock);
 }
 
 void printResults()

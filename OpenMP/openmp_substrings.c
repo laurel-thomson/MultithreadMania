@@ -5,8 +5,6 @@
 
 #define NUM_THREADS 4
 #define WIKI_ARRAY_SIZE 8
-
-
 #define MAX_ENTRY_LENGTH 100
 
 char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
