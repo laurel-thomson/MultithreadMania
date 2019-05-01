@@ -66,10 +66,9 @@ void calcSubstring(int threadID)
 	{
 		for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
 		{
-			printf("Index = %d\n",index);
 			string1 = wiki_array[index];
 			string2 = wiki_array[index+1];
-			m = strlen(string1);
+			m = strlen(string1); 
 			n = strlen(string2);
 			int L[m+1][n+1];
 			int i,j;
@@ -98,7 +97,7 @@ void calcSubstring(int threadID)
 			int s_index = 0;
 			i = 0;
 			j = 0;
-			
+		
 			while (i < m && j < n)
 			{
 				if (string1[i] == string2[j])
@@ -106,10 +105,9 @@ void calcSubstring(int threadID)
 					substring[s_index] = string1[i];
 					i++; j++; s_index++;
 				}
-				else if (L[i+1,j] >= L[i,j+1]) i++;
+				else if (L[i+1][j] >= L[i][j+1]) i++;
 				else j++;
 			}
-			//add the null terminating character to the end of the substring
 			substring[s_index] = '\0';
 			
 			#pragma omp critical
