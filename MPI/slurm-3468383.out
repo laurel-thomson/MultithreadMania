@@ -1,0 +1,26 @@
+--------------------------------------------------------------------------
+Open MPI tried to fork a new process via the "execve" system call but
+failed.  Open MPI checks many things before attempting to launch a
+child process, but nothing is perfect. This error may be indicative
+of another problem on the target host, or even something as silly as
+having specified a directory for your application. Your job will now
+abort.
+
+  Local host:        elf22
+  Working dir:       /homes/enpayne/OSProject4/MPI
+  Application name:  /homes/enpayne/OSProject4/MPI/mpi
+  Error:             Exec format error
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun was unable to start the specified application as it encountered an
+error:
+
+Error code: 1
+Error name: (null)
+Node: elf22
+
+when attempting to start process rank 0.
+--------------------------------------------------------------------------
+[elf22:21583] 3 more processes have sent help message help-orte-odls-default.txt / execve error
+[elf22:21583] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+4 total processes failed to start

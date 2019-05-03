@@ -26,7 +26,8 @@ int main(int argc, char *argv[]) {
 	MPI_Request request;
 
 	printf("******************STARTING CODE*******************");
-
+	fflush(stdout);	//Flushes out output buffer
+	
 	ierr = MPI_Init(&argc, &argv);
 	FILE * fp = fopen("/homes/enpayne/OSProject4/sample.txt","r");
 
