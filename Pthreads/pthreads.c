@@ -93,7 +93,8 @@ int main()
 	printf("Elapsed time: %f\n",elapsedTime);
 	printf("Virtual Memory Usage: %d\n",myMemory.virtualMem);
 	printf("Physical Memory Usage: %d\n",myMemory.physicalMem);
-	
+	printf("Number of threads: %d\n",NUM_THREADS);	
+
 	pthread_exit(NULL);
 	return 0;
 }
