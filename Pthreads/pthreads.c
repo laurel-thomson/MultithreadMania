@@ -90,6 +90,7 @@ int main()
 	
 	processMem_t myMemory;
 	GetProcessMemory(&myMemory);
+	printf("Elapsed time: %f\n",elapsedTime);
 	printf("Virtual Memory Usage: %d\n",myMemory.virtualMem);
 	printf("Physical Memory Usage: %d\n",myMemory.physicalMem);
 	
