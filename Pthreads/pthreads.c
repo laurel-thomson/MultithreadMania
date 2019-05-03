@@ -7,6 +7,7 @@
 #include "sys/sysinfo.h"
 #include <sys/time.h>
 
+#define NUM_THREADS 4
 #define CHUNK_SIZE 20
 #define STRING_SIZE 1024
 
@@ -20,10 +21,9 @@ void printResults();
 int parseLine(char *);
 void writeOutput();
 
-int NUM_THREADS;
-
 int lines_read;
 int batch_number = 0;
+
 struct timeval t1, t2;
 double elapsedTime;
 
@@ -38,7 +38,6 @@ void GetProcessMemory(processMem_t*);
 
 int main()
 {
-	NUM_THREADS = getenv("SLURM_NTASKS");
 	pthread_t threads[NUM_THREADS];
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -46,10 +45,7 @@ int main()
 	
 	gettimeofday(&t1, NULL);
 	
-	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");
-	
-	int temp = 0;
-	
+	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");	
 	while (1)
 	{
 		lines_read = readFile(fp);
@@ -83,18 +79,18 @@ int main()
 		if (lines_read < CHUNK_SIZE) break;
 	}
 	
-	gettimeofday(&t2, NULL);
+		gettimeofday(&t2, NULL);
 	elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0; //sec to ms
 	elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
 	
-	printf("Elapsed time in ms = %f\n", elapsedTime);
-	
 	pthread_mutex_destroy(&lock);
 	fclose(fp);
+	
 	processMem_t myMemory;
 	GetProcessMemory(&myMemory);
 	printf("Virtual Memory Usage: %d\n",myMemory.virtualMem);
 	printf("Physical Memory Usage: %d\n",myMemory.physicalMem);
+	
 	pthread_exit(NULL);
 	return 0;
 }
