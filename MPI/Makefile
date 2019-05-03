@@ -1,2 +1,2 @@
 mpimake:
-	mpicc -c mpi.c
+	mpicc -c MPI_C_SAMPLE.c -o mpi -g
