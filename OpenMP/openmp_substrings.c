@@ -33,11 +33,12 @@ void printResults();
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 int main() {
-	NUM_THREADS = getenv("SLURM_NTASKS");
+	NUM_THREADS = atoi(getenv("SLURM_NTASKS"));
 	omp_set_num_threads(NUM_THREADS);
 
 	gettimeofday(&t1, NULL);
-	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");	
+	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");
+	
 	while (1)
 	{
 		lines_read = readFile(fp);
@@ -62,6 +63,7 @@ int main() {
 	getProcessMemory(&myMemory);
 	printf("Virtual memory usage: %d\n", myMemory.virtualMem);
 	printf("Physical memory usage: %d\n", myMemory.physicalMem);
+	printf("Number of threads: %d\n", NUM_THREADS);
 
 	fclose(fp);
 	return 0;
