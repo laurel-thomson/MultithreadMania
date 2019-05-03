@@ -1,0 +1,22 @@
+Running MPI programs under Slurm
+
+1. Write your MPI code. 
+
+2. Load MPI
+	module load OpenMPI
+
+3. Compile your code
+	mpicc mycode.c -o mycode
+
+4. Create a submission batch script. (we can call it 'mpi_sbatch.sh')
+	#!/bin/bash -l
+	##$ -l h_rt=0:01:00		# ask for 1 hour runtime
+	#SBATCH --constraint=dwarves     # only run on dwarves
+
+ 	module load OpenMPI
+
+	mpirun /homes/dan/625_slurm/pt2 #change to match the path to your code
+
+5. Submit your MPI job to the scheduler. In this case asking for 4 cores on 1 node.
+	sbatch --ntasks-per-node=4 --nodes=1 mpi_sbatch.sh
+
