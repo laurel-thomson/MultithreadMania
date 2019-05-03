@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+#include <sys/time.h>
 
-#define NUM_THREADS 4
 #define CHUNK_SIZE 20
 #define STRING_SIZE 1024
 
@@ -14,20 +17,39 @@ char substring_array[CHUNK_SIZE][STRING_SIZE];
 int readFile(FILE *);
 void calcSubstring(int);
 void printResults();
+int parseLine(char *);
+void writeOutput();
+
+int NUM_THREADS;
 
 int lines_read;
 int batch_number = 0;
+struct timeval t1, t2;
+double elapsedTime;
+
+typedef struct {
+  uint32_t virtualMem;
+  uint32_t physicalMem;
+} processMem_t;
+
+void GetProcessMemory(processMem_t*);
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 int main()
 {
+	NUM_THREADS = getenv("SLURM_NTASKS");
 	pthread_t threads[NUM_THREADS];
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	
-	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");	
+	gettimeofday(&t1, NULL);
+	
+	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");
+	
+	int temp = 0;
+	
 	while (1)
 	{
 		lines_read = readFile(fp);
@@ -61,8 +83,18 @@ int main()
 		if (lines_read < CHUNK_SIZE) break;
 	}
 	
+	gettimeofday(&t2, NULL);
+	elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0; //sec to ms
+	elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
+	
+	printf("Elapsed time in ms = %f\n", elapsedTime);
+	
 	pthread_mutex_destroy(&lock);
 	fclose(fp);
+	processMem_t myMemory;
+	GetProcessMemory(&myMemory);
+	printf("Virtual Memory Usage: %d\n",myMemory.virtualMem);
+	printf("Physical Memory Usage: %d\n",myMemory.physicalMem);
 	pthread_exit(NULL);
 	return 0;
 }
@@ -159,4 +191,28 @@ void printResults()
 	{
 		printf("Line: %d, LCS: %s\n",batch_number*CHUNK_SIZE + i,substring_array[i]);
 	}
+}
+
+void GetProcessMemory(processMem_t* processMem) {
+	FILE *file = fopen("/proc/self/status", "r");
+	char line[128];
+
+	while (fgets(line, 128, file) != NULL) {
+		if (strncmp(line, "VmSize:", 7) == 0) {
+			processMem->virtualMem = parseLine(line);
+		}
+
+		if (strncmp(line, "VmRSS:", 6) == 0) {
+			processMem->physicalMem = parseLine(line);
+		}
+	}
+	fclose(file);
+}
+
+int parseLine(char *line) {
+	int i = strlen(line);
+	const char *p = line;
+	while (*p < '0' || *p > '9') p++;
+	line[i - 3] = '\0';
+	return atoi(p);
 }
