@@ -38,7 +38,7 @@ void GetProcessMemory(processMem_t*);
 
 int main()
 {
-	NUM_THREADS = getenv("SLURM_NTASKS");
+	NUM_THREADS = atoi(getenv("SLURM_NTASKS"));
 	//NUM_THREADS = 4;
 	pthread_t threads[NUM_THREADS];
 	pthread_attr_t attr;
