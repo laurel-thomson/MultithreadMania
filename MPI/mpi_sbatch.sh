@@ -1,7 +1,17 @@
 #!/bin/bash -l
-##$ -l h_rt=1-00:00:00
-#SBATCH -o openMPI.out
+#SBATCH --job-name=enpayneMPI
+
+#SBATCH --mem-per-cpu=4G   # Memory per core, use --mem= for memory per node
+#SBATCH --time=10:00:00   # Use the form DD-HH:MM:SS
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=32
+#SBATCH --constraint=elves
+
+#SBATCH --mail-user=enpayne@ksu.edu
+#SBATCH --mail-type=ALL   # same as =BEGIN,FAIL,END
+
+mpirun -np $SLURM_NPROCS NPmpi -o np.out
 
 module load OpenMPI
 
-mpirun /samant4/openMPI # change path to openMPI code
+mpirun /homes/enpayne/OSProject4/MPI/mpi # change path to openMPI executablee

@@ -25,8 +25,10 @@ int main(int argc, char *argv[]) {
 	MPI_Status status;
 	MPI_Request request;
 
+	printf("******************STARTING CODE*******************");
+
 	ierr = MPI_Init(&argc, &argv);
-	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");
+	FILE * fp = fopen("/homes/enpayne/OSProject4/sample.txt","r");
 
 	if (ierr != MPI_SUCCESS)
 	{
