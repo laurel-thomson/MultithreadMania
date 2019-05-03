@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+#include <sys/time.h>
 
-#define NUM_THREADS 4
 #define WIKI_ARRAY_SIZE 50
 #define MAX_ENTRY_LENGTH 1000
 
@@ -11,7 +14,18 @@ char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
 char substrings[WIKI_ARRAY_SIZE-1][MAX_ENTRY_LENGTH];
 int lines_read;
 int batch_number = 0;
+int NUM_THREADS;
+struct timeval t1, t2;
+double elapsedTime;
 
+typedef struct {
+	uint32_t virtualMem;
+	uint32_t physicalMem;
+} processMem_t;
+
+void getProcessMemory(processMem_t *);
+int parseLine(char *);
+void writeOutput();
 int readFile(FILE *);
 void calcSubstring(int);
 void printResults();
@@ -19,7 +33,10 @@ void printResults();
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 int main() {
+	NUM_THREADS = getenv("SLURM_NTASKS");
 	omp_set_num_threads(NUM_THREADS);
+
+	gettimeofday(&t1, NULL);
 	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");	
 	while (1)
 	{
@@ -34,6 +51,18 @@ int main() {
 		batch_number++;
 		if (lines_read < WIKI_ARRAY_SIZE) break;
 	}
+
+	gettimeofday(&t2, NULL);
+	elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000;
+	elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0;
+
+	printf("Elapsed time in ms = %f\n", elapsedTime);
+
+	processMem_t myMemory;
+	getProcessMemory(&myMemory);
+	printf("Virtual memory usage: %d\n", myMemory.virtualMem);
+	printf("Physical memory usage: %d\n", myMemory.physicalMem);
+
 	fclose(fp);
 	return 0;
 }
@@ -134,4 +163,27 @@ void printResults()
 	{
 		printf("Line: %d, LCS: %s\n",batch_number*WIKI_ARRAY_SIZE + i,substrings[i]);
 	}
+}
+
+void getProcessMemory(processMem_t * processMem) {
+	FILE * fp = fopen("/proc/self/status","r");
+	char line[128];
+	while (fgets(line, 128, fp) != NULL) {
+		if (strncmp(line, "VmSize:", 7) == 0) {
+			processMem->virtualMem = parseLine(line);
+		}
+		
+		if (strncmp(line, "VmRSS:", 6) == 0) {
+			processMem->physicalMem = parseLine(line);
+		}
+	}
+	fclose(fp);
+}
+
+int parseLine(char * line) {
+	int i = strlen(line);
+	const char * p = line;
+	while (*p < '0' || *p > '9') p++;
+	line[i-3] = '\0';
+	return atoi(p);
 }
