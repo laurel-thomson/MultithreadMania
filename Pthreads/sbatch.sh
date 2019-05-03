@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./pthread
+./pthreads

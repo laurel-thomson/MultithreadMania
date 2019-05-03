@@ -7,13 +7,13 @@
 #include "sys/sysinfo.h"
 #include <sys/time.h>
 
-#define NUM_THREADS 4
 #define CHUNK_SIZE 20
 #define STRING_SIZE 1024
 
 pthread_mutex_t lock;
 char wiki_array[CHUNK_SIZE][STRING_SIZE];
 char substring_array[CHUNK_SIZE][STRING_SIZE];
+int NUM_THREADS;
 
 int readFile(FILE *);
 void calcSubstring(int);
@@ -38,6 +38,8 @@ void GetProcessMemory(processMem_t*);
 
 int main()
 {
+	NUM_THREADS = getenv("SLURM_NTASKS");
+	//NUM_THREADS = 4;
 	pthread_t threads[NUM_THREADS];
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
