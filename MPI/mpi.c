@@ -2,55 +2,86 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+#include <sys/time.h>
 
-#define NUM_THREADS 4
-#define WIKI_ARRAY_SIZE 50
-#define MAX_ENTRY_LENGTH 1000
-
-char wiki_array[WIKI_ARRAY_SIZE][MAX_ENTRY_LENGTH];
-char substrings[WIKI_ARRAY_SIZE-1][MAX_ENTRY_LENGTH];
-int lines_read;
-int batch_number = 0;
-int num_threads;
-
-int readFile(FILE *);
-void calcSubstring(int);
-void printResults();
+#define CHUNK_SIZE 50
+#define STRING_SIZE 1024
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
+typedef struct {
+  uint32_t virtualMem;
+  uint32_t physicalMem;
+} processMem_t;
+
+struct timeval t1, t2;
+double elapsedTime;
+int NUM_THREADS;
+int lines_read;
+int batch_number = 0;
+char wiki_array[CHUNK_SIZE][STRING_SIZE];
+char substrings[CHUNK_SIZE][STRING_SIZE];
+char local_substrings[CHUNK_SIZE][STRING_SIZE];
+
+int readFile(FILE *);
+void calcSubstring(void*);
+void printResults();
+int parseLine(char *);
+void writeOutput();
+void GetProcessMemory(processMem_t*);
+
 int main(int argc, char *argv[]) {
-	int num_tasks, rank, ierr;
-
 	MPI_Status status;
-	MPI_Request request;
-
-	printf("******************STARTING CODE*******************");
-	fflush(stdout);	//Flushes out output buffer
 	
-	ierr = MPI_Init(&argc, &argv);
+	int rc, rank, numtasks;
+	
+	rc = MPI_Init(&argc,&argv);
+	if (rc != MPI_SUCCESS) {
+		printf ("Error starting MPI program. Terminating.\n");
+        MPI_Abort(MPI_COMM_WORLD, rc);
+	}
+	
+	MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	
+	NUM_THREADS = numtasks;
+	
+	printf("size = %d rank = %d\n", numtasks, rank);
+	fflush(stdout);
+	
+	gettimeofday(&t1, NULL);
+	
 	FILE * fp = fopen("/homes/enpayne/OSProject4/sample.txt","r");
-
-	if (ierr != MPI_SUCCESS)
-	{
-		printf("Error");
-		MPI_Abort(MPI_COMM_WORLD, ierr);
+	
+	if (rank == 0) {
+		readFile(fp);
 	}
-	else {
-		MPI_Comm_size(MPI_COMM_WORLD, &num_tasks);
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-		num_threads = num_tasks;
-
-		lines_read = readFile(fp);
-
-		if (lines_read == 0) return 0;
-
-		printResults();
-		batch_number++;
-		if (lines_read < WIKI_ARRAY_SIZE) return 0;
+	
+	MPI_Bcast(wiki_array, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+	
+	calcSubstring(&rank);
+	
+	MPI_Reduce(local_substrings, substrings, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, MPI_SUM, 0, MPI_COMM_WORLD);
+	
+	if (rank == 0) {
+		printResults();	
 	}
+	
+	elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0; //sec to ms
+	elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
+
+	MPI_Finalize();
 	fclose(fp);
-	return 0;
+	
+	processMem_t myMemory;
+	GetProcessMemory(&myMemory);
+	printf("Elapsed time: %f\n",elapsedTime);
+	printf("Virtual Memory Usage: %d\n",myMemory.virtualMem);
+	printf("Physical Memory Usage: %d\n",myMemory.physicalMem);
+	printf("Number of threads: %d\n",NUM_THREADS);	
 }
 
 int readFile(FILE * fp)
@@ -60,13 +91,13 @@ int readFile(FILE * fp)
 		printf("fail");
 		return 0;
 	}
-
-	char buff[MAX_ENTRY_LENGTH];
+	
+	char buff[STRING_SIZE];
 	int line_number = 0;
 	int i;
-	for (i = 0; i < WIKI_ARRAY_SIZE; i++)
+	for (i = 0; i < CHUNK_SIZE; i++)
 	{
-		if (fgets(buff,MAX_ENTRY_LENGTH,fp) == NULL)
+		if (fgets(buff,STRING_SIZE,fp) == NULL)
 		{
 			return i;
 		}
@@ -76,25 +107,27 @@ int readFile(FILE * fp)
 	return i;
 }
 
-void calcSubstring(int threadID)
+void calcSubstring(void * rank)
 {
+	int threadID = *((int *)rank);
+	
 	//dynamic programming table for comparing two wiki entries
 	char * string1;
 	char * string2;
-	char substring[MAX_ENTRY_LENGTH]; //the longest common substring
+	char substring[STRING_SIZE]; //the longest common substring
 	int m; //length of string 1
 	int n; //length of string 2
 	int index;
-
-	for (index = threadID; index < WIKI_ARRAY_SIZE - 1; index += NUM_THREADS)
+	
+	for (index = threadID; index < CHUNK_SIZE - 1; index += NUM_THREADS)
 	{
 		string1 = wiki_array[index];
 		string2 = wiki_array[index+1];
-		m = strlen(string1);
+		m = strlen(string1); 
 		n = strlen(string2);
 		int L[m+1][n+1];
 		int i,j;
-
+		
 		//calculate the dynamic programming table
 		for (i = 0; i <=m; i++)
 		{
@@ -114,12 +147,12 @@ void calcSubstring(int threadID)
 				}
 			}
 		}
-
+		
 		//make another pass through the table to find the longest common substring
 		int s_index = 0;
 		i = 0;
 		j = 0;
-
+	
 		while (i < m && j < n)
 		{
 			if (string1[i] == string2[j])
@@ -131,16 +164,40 @@ void calcSubstring(int threadID)
 			else j++;
 		}
 		substring[s_index] = '\0';
-
-		strcpy(substrings[index],substring);
+		strcpy(local_substrings[index],substring);
 	}
 }
 
 void printResults()
 {
 	int i;
-	for (i = 0; i < WIKI_ARRAY_SIZE-1; i++)
+	for (i = 0; i < CHUNK_SIZE; i++)
 	{
-		printf("Line: %d, LCS: %s\n",batch_number*WIKI_ARRAY_SIZE + i,substrings[i]);
+		printf("Line: %d, LCS: %s\n",batch_number*CHUNK_SIZE + i,substrings[i]);
 	}
 }
+
+void GetProcessMemory(processMem_t* processMem) {
+	FILE *file = fopen("/proc/self/status", "r");
+	char line[128];
+
+	while (fgets(line, 128, file) != NULL) {
+		if (strncmp(line, "VmSize:", 7) == 0) {
+			processMem->virtualMem = parseLine(line);
+		}
+
+		if (strncmp(line, "VmRSS:", 6) == 0) {
+			processMem->physicalMem = parseLine(line);
+		}
+	}
+	fclose(file);
+}
+
+int parseLine(char *line) {
+	int i = strlen(line);
+	const char *p = line;
+	while (*p < '0' || *p > '9') p++;
+	line[i - 3] = '\0';
+	return atoi(p);
+}
+
