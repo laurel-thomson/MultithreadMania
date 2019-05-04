@@ -1,0 +1,6 @@
+Submitted batch job 3473414
+Submitted batch job 3473415
+Submitted batch job 3473416
+Submitted batch job 3473417
+sbatch: Warning: can't run 8 processes on 16 nodes, setting nnodes to 8
+Submitted batch job 3473418
