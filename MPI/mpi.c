@@ -35,8 +35,9 @@ void GetProcessMemory(processMem_t*);
 
 int main(int argc, char *argv[]) {
 	MPI_Status status;
-	
 	int rc, rank, numtasks;
+	
+	FILE * fp = fopen("/homes/dan/625/wiki_dump.txt","r");
 	
 	rc = MPI_Init(&argc,&argv);
 	if (rc != MPI_SUCCESS) {
@@ -45,35 +46,37 @@ int main(int argc, char *argv[]) {
 	}
 	
 	gettimeofday(&t1, NULL);
-	printf("Start time = %f\n",t1);
 	
-	MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
-    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	
-	NUM_THREADS = numtasks;
-	
-	printf("size = %d rank = %d\n", numtasks, rank);
-	fflush(stdout);
+	while (1)
+	{
+		MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+		MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	
-	FILE * fp = fopen("/homes/enpayne/OSProject4/sample.txt","r");
-	
-	if (rank == 0) {
-		readFile(fp);
-	}
-	
-	MPI_Bcast(wiki_array, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
-	
-	calcSubstring(&rank);
-	
-	MPI_Reduce(local_substrings, substrings, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, MPI_SUM, 0, MPI_COMM_WORLD);
-	
-	if (rank == 0) {
-		printResults();	
+		NUM_THREADS = numtasks;
+
+		printf("size = %d rank = %d\n", numtasks, rank);
+		fflush(stdout);
+
+		if (rank == 0) {
+			lines_read = readFile(fp);
+			if (lines_read == 0) break;
+		}
+
+		MPI_Bcast(wiki_array, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		calcSubstring(&rank);
+
+		MPI_Reduce(local_substrings, substrings, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, MPI_SUM, 0, MPI_COMM_WORLD);
+
+		if (rank == 0) {
+			printResults();	
+		}
+		
+		batch_number++;
+		if (lines_read < CHUNK_SIZE) break;
 	}
 	
 	gettimeofday(&t2, NULL);
-	printf("End time = %f\n",t2);
 	elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0; //sec to ms
 	elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
 	
