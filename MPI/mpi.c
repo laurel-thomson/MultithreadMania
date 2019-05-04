@@ -44,6 +44,9 @@ int main(int argc, char *argv[]) {
         MPI_Abort(MPI_COMM_WORLD, rc);
 	}
 	
+	gettimeofday(&t1, NULL);
+	printf("Start time = %f\n",t1);
+	
 	MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
@@ -51,8 +54,7 @@ int main(int argc, char *argv[]) {
 	
 	printf("size = %d rank = %d\n", numtasks, rank);
 	fflush(stdout);
-	
-	gettimeofday(&t1, NULL);
+
 	
 	FILE * fp = fopen("/homes/enpayne/OSProject4/sample.txt","r");
 	
@@ -70,10 +72,11 @@ int main(int argc, char *argv[]) {
 		printResults();	
 	}
 	
+	gettimeofday(&t2, NULL);
+	printf("End time = %f\n",t2);
 	elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0; //sec to ms
 	elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
-
-	MPI_Finalize();
+	
 	fclose(fp);
 	
 	processMem_t myMemory;
@@ -82,6 +85,8 @@ int main(int argc, char *argv[]) {
 	printf("Virtual Memory Usage: %d\n",myMemory.virtualMem);
 	printf("Physical Memory Usage: %d\n",myMemory.physicalMem);
 	printf("Number of threads: %d\n",NUM_THREADS);	
+	
+	MPI_Finalize();
 }
 
 int readFile(FILE * fp)
