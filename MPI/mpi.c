@@ -7,7 +7,7 @@
 #include "sys/sysinfo.h"
 #include <sys/time.h>
 
-#define CHUNK_SIZE 50
+#define WIKI_SIZE 5000
 #define STRING_SIZE 1024
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -20,13 +20,11 @@ typedef struct {
 struct timeval t1, t2;
 double elapsedTime;
 int NUM_THREADS;
-int lines_read;
-int batch_number = 0;
-char wiki_array[CHUNK_SIZE][STRING_SIZE];
-char substrings[CHUNK_SIZE][STRING_SIZE];
-char local_substrings[CHUNK_SIZE][STRING_SIZE];
+char wiki_array[WIKI_SIZE][STRING_SIZE];
+char substrings[WIKI_SIZE][STRING_SIZE];
+char local_substrings[WIKI_SIZE][STRING_SIZE];
 
-int readFile(FILE *);
+void readFile(FILE *);
 void calcSubstring(void*);
 void printResults();
 int parseLine(char *);
@@ -47,33 +45,26 @@ int main(int argc, char *argv[]) {
 	
 	gettimeofday(&t1, NULL);
 	
-	while (1)
-	{
-		MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
-		MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-		NUM_THREADS = numtasks;
+	NUM_THREADS = numtasks;
 
-		printf("size = %d rank = %d\n", numtasks, rank);
-		fflush(stdout);
+	printf("size = %d rank = %d\n", numtasks, rank);
+	fflush(stdout);
 
-		if (rank == 0) {
-			lines_read = readFile(fp);
-			if (lines_read == 0) break;
-		}
+	if (rank == 0) {
+		readFile(fp);
+	}
 
-		MPI_Bcast(wiki_array, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+	MPI_Bcast(wiki_array, WIKI_SIZE * STRING_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-		calcSubstring(&rank);
+	calcSubstring(&rank);
 
-		MPI_Reduce(local_substrings, substrings, CHUNK_SIZE * STRING_SIZE, MPI_CHAR, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(local_substrings, substrings, WIKI_SIZE * STRING_SIZE, MPI_CHAR, MPI_SUM, 0, MPI_COMM_WORLD);
 
-		if (rank == 0) {
-			printResults();	
-		}
-		
-		batch_number++;
-		if (lines_read < CHUNK_SIZE) break;
+	if (rank == 0) {
+		printResults();	
 	}
 	
 	gettimeofday(&t2, NULL);
@@ -92,27 +83,26 @@ int main(int argc, char *argv[]) {
 	MPI_Finalize();
 }
 
-int readFile(FILE * fp)
+void readFile(FILE * fp)
 {
 	if(fp == NULL)
 	{
 		printf("fail");
-		return 0;
+		return;
 	}
 	
 	char buff[STRING_SIZE];
 	int line_number = 0;
 	int i;
-	for (i = 0; i < CHUNK_SIZE; i++)
+	for (i = 0; i < WIKI_SIZE; i++)
 	{
 		if (fgets(buff,STRING_SIZE,fp) == NULL)
 		{
-			return i;
+			return ;
 		}
 		strcpy(wiki_array[line_number],buff);
 		line_number++;
 	}
-	return i;
 }
 
 void calcSubstring(void * rank)
@@ -127,7 +117,7 @@ void calcSubstring(void * rank)
 	int n; //length of string 2
 	int index;
 	
-	for (index = threadID; index < CHUNK_SIZE - 1; index += NUM_THREADS)
+	for (index = threadID; index < WIKI_SIZE - 1; index += NUM_THREADS)
 	{
 		string1 = wiki_array[index];
 		string2 = wiki_array[index+1];
@@ -179,9 +169,9 @@ void calcSubstring(void * rank)
 void printResults()
 {
 	int i;
-	for (i = 0; i < CHUNK_SIZE; i++)
+	for (i = 0; i < WIKI_SIZE; i++)
 	{
-		printf("Line: %d, LCS: %s\n",batch_number*CHUNK_SIZE + i,substrings[i]);
+		printf("Line: %d, LCS: %s\n",i,substrings[i]);
 	}
 }
 
