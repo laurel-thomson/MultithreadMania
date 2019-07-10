@@ -1,1 +1,8 @@
-# OSProject4
+# Multithread Mania
+
+This is a project created for an operating systems course at Kansas State University by myself, <a href="https://github.com/enpayne27">Erin Payne</a>, and <a href="https://github.com/montgomerysamantha">Samantha Montgomery</a>.  This purpose of this project is to
+process a text file consisting of 1,000,000 lines and for each line, calculate the longest common substring between itself and its subsequent line.  We solved this problem three times, using three different multithreading libraries (OpenMP, MPI, and Pthreads).  The scripts were then scheduled to run on Beocat, the KSU supercomputer, with a variable number of cores and threads and the processing times and memory usages were recorded and analyzed.
+
+In order to make use of multiple threads to speed the processing time, we read in a chunk of the file and then spawned off n child threads (determined by the Beocat scheduling environment).  For each thread created, it processed every line of the file chunk where the file line % the thread count = the thread's id.  So, if four threads were spawned, the first child thread processes lines 0, 4, 8, ... and the second child thread processes lines 1, 5, 9, ...
+
+For each line in the file, the longest common substring problem was solved using a dynamic programming approach.  For two strings, a and b, of lines m and n, respectively, an array is created of size m * n.  Then, the array is populated so that the entry at position i,j corresponds to the length of the longest common substring between the substring of a from 0 to i and the substring of b from 0 to j.  Once the array is populated, we iterate over the table starting at position m,n and reconstruct the largest common substring between the two strings.
